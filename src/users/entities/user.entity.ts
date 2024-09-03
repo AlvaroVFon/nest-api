@@ -1,5 +1,11 @@
 import { Role } from 'src/roles/entities/role.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  DeleteDateColumn,
+} from 'typeorm';
 import { IsString, IsEmail, IsNumber } from '@nestjs/class-validator';
 
 @Entity()
@@ -27,5 +33,8 @@ export class User {
   created_at: Date;
 
   @Column({ default: null })
-  updated_at: Date;
+  updated_at?: Date;
+
+  @DeleteDateColumn({ default: null })
+  deleted_at?: Date;
 }

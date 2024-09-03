@@ -17,7 +17,9 @@ export class UsersService {
   }
 
   async findAll() {
-    const users = await this.userRepository.find();
+    const users = await this.userRepository.find({
+      relations: ['role_id'],
+    });
     return users.map(({ password, ...user }) => user); //eslint-disable-line
   }
 
@@ -95,6 +97,54 @@ export class UsersService {
         return {
           statusCode: HttpStatus.OK,
           message: 'User deleted successfully',
+        };
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async softRemove(id: number) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id } });
+
+      if (!user) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'User not found',
+        };
+      }
+
+      const updatedUser = await this.userRepository.softDelete(id);
+      if (updatedUser.affected > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'User deleted successfully',
+        };
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async restore(id: number) {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+        withDeleted: true,
+      });
+
+      if (!user) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'User not found',
+        };
+      }
+
+      const updatedUser = await this.userRepository.restore(id);
+      if (updatedUser.affected > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'User restored successfully',
         };
       }
     } catch (error) {
