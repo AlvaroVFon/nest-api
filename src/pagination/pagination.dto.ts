@@ -14,5 +14,5 @@ export class PaginationDto {
   @IsOptional()
   @IsPositive()
   @Type(() => Number)
-  skip?: number = this.page ? (this.page - 1) * this.limit : 0;
+  skip?: number;
 }

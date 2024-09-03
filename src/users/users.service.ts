@@ -18,7 +18,9 @@ export class UsersService {
   }
 
   async findAll(pagination: PaginationDto) {
-    const { page = 1, limit = 3, skip } = pagination;
+    const { page = 1, limit = 3 } = pagination;
+
+    const skip = (page - 1) * limit;
 
     const [users, total] = await this.userRepository.findAndCount({
       relations: ['role_id'],
