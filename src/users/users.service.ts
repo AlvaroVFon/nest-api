@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -11,27 +11,94 @@ export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
   ) {}
-  create(createUserDto: CreateUserDto) {
-    createUserDto.password = bcrypt.hashSync(createUserDto.password, 10);
+  async create(createUserDto: CreateUserDto) {
+    createUserDto.password = await bcrypt.hashSync(createUserDto.password, 10);
     return this.userRepository.save(createUserDto);
   }
 
-  findAll() {
-    return this.userRepository.find();
+  async findAll() {
+    const users = await this.userRepository.find();
+    return users.map(({ password, ...user }) => user); //eslint-disable-line
   }
 
-  findOne(id: number) {
-    return this.userRepository.findOne({ where: { id } });
-  }
-  findOneByEmail(email: string) {
-    return this.userRepository.findOne({ where: { email } });
+  async findOne(id: number) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id } });
+      if (!user) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'User not found',
+        };
+      }
+      const { password, ...result } = user; //eslint-disable-line
+      return result;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async findOneByEmail(email: string) {
+    try {
+      const user = this.userRepository.findOne({ where: { email } });
+      if (!user) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'User not found',
+        };
+      }
+      return user;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id } });
+
+      if (!user) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'User not found',
+        };
+      }
+
+      updateUserDto.updated_at = new Date();
+
+      const updatedUser = await this.userRepository.update(id, updateUserDto);
+
+      if (updatedUser.affected > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'User updated successfully',
+          data: updateUserDto,
+        };
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async remove(id: number) {
+    try {
+      const user = await this.userRepository.findOne({ where: { id } });
+
+      if (!user) {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          message: 'User not found',
+        };
+      }
+
+      const deletedUser = await this.userRepository.delete(id);
+      if (deletedUser.affected > 0) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'User deleted successfully',
+        };
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
