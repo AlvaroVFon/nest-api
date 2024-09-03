@@ -5,6 +5,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { PaginationDto } from 'src/pagination/pagination.dto';
 
 @Injectable()
 export class UsersService {
@@ -16,11 +17,25 @@ export class UsersService {
     return this.userRepository.save(createUserDto);
   }
 
-  async findAll() {
-    const users = await this.userRepository.find({
+  async findAll(pagination: PaginationDto) {
+    const { page = 1, limit = 3, skip } = pagination;
+
+    const [users, total] = await this.userRepository.findAndCount({
       relations: ['role_id'],
+      skip,
+      take: limit,
     });
-    return users.map(({ password, ...user }) => user); //eslint-disable-line
+
+    const totalPages = Math.ceil(total / limit);
+
+    const data = users.map(({ password, ...result }) => result); //eslint-disable-line
+
+    return {
+      data,
+      total,
+      page,
+      totalPages,
+    };
   }
 
   async findOne(id: number) {
