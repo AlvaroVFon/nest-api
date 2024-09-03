@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { NotFoundControllerController } from './not-found-controller/not-found-controller.controller';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ConfigModule } from '@nestjs/config';
     RolesModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, NotFoundControllerController],
   providers: [AppService],
 })
 export class AppModule {
