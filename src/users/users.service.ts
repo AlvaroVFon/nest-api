@@ -1,11 +1,12 @@
 import * as bcrypt from 'bcrypt';
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { PaginationDto } from 'src/pagination/pagination.dto';
+import { UserResponse } from './dto/user.response.dto';
 
 @Injectable()
 export class UsersService {
@@ -22,49 +23,54 @@ export class UsersService {
 
     const skip = (page - 1) * limit;
 
-    const [users, total] = await this.userRepository.findAndCount({
-      relations: ['role_id'],
-      skip,
-      take: limit,
-    });
-
-    const totalPages = Math.ceil(total / limit);
-
-    const data = users.map(({ password, ...result }) => result); //eslint-disable-line
-
-    return {
-      data,
-      total,
-      page,
-      totalPages,
-    };
-  }
-
-  async findOne(id: number) {
     try {
-      const user = await this.userRepository.findOne({ where: { id } });
-      if (!user) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
+      const [users, total] = await this.userRepository.findAndCount({
+        relations: ['role_id'],
+        skip,
+        take: limit,
+      });
+
+      const totalPages = Math.ceil(total / limit);
+
+      if (page > totalPages) {
+        throw new NotFoundException('Page not found');
       }
-      const { password, ...result } = user; //eslint-disable-line
-      return result;
+
+      const data = users.map((user) => UserResponse.toObject(user));
+
+      return {
+        data,
+        total,
+        page,
+        totalPages,
+      };
     } catch (error) {
       console.log(error);
     }
   }
 
-  async findOneByEmail(email: string) {
+  async findOne(id: number): Promise<User> {
+    try {
+      const user = await this.userRepository.findOne({ where: { id } });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      return user;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async findOneByEmail(email: string): Promise<User> {
     try {
       const user = this.userRepository.findOne({ where: { email } });
+
       if (!user) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
+        throw new NotFoundException('User not found');
       }
+
       return user;
     } catch (error) {
       console.log(error);
@@ -76,10 +82,7 @@ export class UsersService {
       const user = await this.userRepository.findOne({ where: { id } });
 
       if (!user) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
+        throw new NotFoundException('User not found');
       }
 
       updateUserDto.updated_at = new Date();
@@ -103,10 +106,7 @@ export class UsersService {
       const user = await this.userRepository.findOne({ where: { id } });
 
       if (!user) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
+        throw new NotFoundException('User not found');
       }
 
       const deletedUser = await this.userRepository.delete(id);
@@ -126,10 +126,7 @@ export class UsersService {
       const user = await this.userRepository.findOne({ where: { id } });
 
       if (!user) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
+        throw new NotFoundException('User not found');
       }
 
       const updatedUser = await this.userRepository.softDelete(id);
@@ -151,13 +148,11 @@ export class UsersService {
       });
 
       if (!user) {
-        return {
-          statusCode: HttpStatus.NOT_FOUND,
-          message: 'User not found',
-        };
+        throw new NotFoundException('User not found');
       }
 
       const updatedUser = await this.userRepository.restore(id);
+
       if (updatedUser.affected > 0) {
         return {
           statusCode: HttpStatus.OK,

@@ -6,8 +6,11 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signin')
-  signIn(@Body() { email, password }: { email: string; password: string }) {
-    return this.authService.signIn(email, password);
+  async signIn(
+    @Body() { email, password }: { email: string; password: string },
+  ) {
+    const user = await this.authService.validateUser(email, password);
+    return this.authService.signIn(user);
   }
 
   @Get('me')

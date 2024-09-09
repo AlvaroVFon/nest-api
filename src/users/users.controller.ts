@@ -13,9 +13,11 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto } from 'src/pagination/pagination.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
+import { UserResponse } from './dto/user.response.dto';
+import { UserPublicDto } from './dto/user.public.dto';
 
-@UseGuards(AuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -31,8 +33,13 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<UserPublicDto> {
+    try {
+      const user = await this.usersService.findOne(+id);
+      return UserResponse.toObject(user);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   @Patch(':id')
