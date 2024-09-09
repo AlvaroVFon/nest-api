@@ -15,7 +15,7 @@ export class UsersService {
   ) {}
   async create(createUserDto: CreateUserDto) {
     createUserDto.password = await bcrypt.hashSync(createUserDto.password, 10);
-    return this.userRepository.save(createUserDto);
+    return await this.userRepository.save(createUserDto);
   }
 
   async findAll(pagination: PaginationDto) {
