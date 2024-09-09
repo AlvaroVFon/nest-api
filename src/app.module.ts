@@ -10,6 +10,12 @@ import { ConfigModule } from '@nestjs/config';
 import { NotFoundControllerController } from './not-found-controller/not-found-controller.controller';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
+import { CartController } from './cart/cart.controller';
+import { CartModule } from './cart/cart.module';
+import { CartService } from './cart/cart.service';
+import { ProductsService } from './products/products.service';
+import { CategoriesService } from './categories/categories.service';
+import { UsersService } from './users/users.service';
 
 @Module({
   imports: [
@@ -31,9 +37,16 @@ import { ProductsModule } from './products/products.module';
     AuthModule,
     CategoriesModule,
     ProductsModule,
+    CartModule,
   ],
-  controllers: [AppController, NotFoundControllerController],
-  providers: [AppService],
+  controllers: [AppController, NotFoundControllerController, CartController],
+  providers: [
+    AppService,
+    CartService,
+    ProductsService,
+    CategoriesService,
+    UsersService,
+  ],
 })
 export class AppModule {
   constructor(private dataSourde: DataSource) {}

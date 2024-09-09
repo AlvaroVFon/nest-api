@@ -4,9 +4,11 @@ import {
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
+  OneToMany,
   DeleteDateColumn,
 } from 'typeorm';
 import { IsString, IsEmail, IsNumber } from '@nestjs/class-validator';
+import { Cart } from 'src/cart/entities/cart.entity';
 
 @Entity()
 export class User {
@@ -26,8 +28,10 @@ export class User {
 
   @IsNumber()
   @ManyToOne(() => Role, (role) => role.users)
-  @Column()
   role_id: number;
+
+  @OneToMany(() => Cart, (cart) => cart.user)
+  carts: Cart;
 
   @Column({ default: new Date() })
   created_at: Date;
