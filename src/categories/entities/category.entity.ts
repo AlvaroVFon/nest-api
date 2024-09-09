@@ -3,22 +3,25 @@ import {
   Column,
   PrimaryGeneratedColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { IsString, IsDate } from '@nestjs/class-validator';
+import { Product } from 'src/products/entities/product.entity';
 @Entity()
 export class Category {
   @PrimaryGeneratedColumn()
   id: number;
 
   @IsString()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @IsString()
   @Column()
   description: string;
 
-  //TODO: Add the relation with the product entity
+  @OneToMany(() => Product, (product) => product.category)
+  products: Product[];
 
   @IsDate()
   @Column({ default: null })

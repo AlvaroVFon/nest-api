@@ -6,7 +6,6 @@ import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
 import { PaginationDto } from 'src/pagination/pagination.dto';
 import { CategoryResponse } from './dto/category.response.dto';
-import { CategoryPublicDto } from './dto/category.public.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -38,7 +37,7 @@ export class CategoriesService {
 
       const totalPages = Math.ceil(total / limit);
 
-      if (page > totalPages) {
+      if (page > totalPages && totalPages > 0) {
         throw new NotFoundException('Page not found');
       }
 
@@ -57,7 +56,7 @@ export class CategoriesService {
     }
   }
 
-  async findOne(id: number): Promise<CategoryPublicDto> {
+  async findOne(id: number): Promise<Category> {
     try {
       const category = await this.categoryRepository.findOne({ where: { id } });
 
@@ -65,7 +64,7 @@ export class CategoriesService {
         throw new NotFoundException('Category not found');
       }
 
-      return CategoryResponse.toObject(category);
+      return category;
     } catch (error) {
       throw new Error(error);
     }

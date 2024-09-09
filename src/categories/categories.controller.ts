@@ -12,6 +12,8 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { PaginationDto } from 'src/pagination/pagination.dto';
+import { CategoryResponse } from './dto/category.response.dto';
+import { CategoryPublicDto } from './dto/category.public.dto';
 
 @Controller('categories')
 export class CategoriesController {
@@ -28,8 +30,9 @@ export class CategoriesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.categoriesService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<CategoryPublicDto> {
+    const category = await this.categoriesService.findOne(+id);
+    return CategoryResponse.toObject(category);
   }
 
   @Patch(':id')
