@@ -39,6 +39,14 @@ export class OrdersService {
           throw new NotFoundException('Product not found');
         }
 
+        if (product.stock < item.quantity) {
+          throw new Error('Insufficient stock');
+        }
+
+        await this.productsService.update(product.id, {
+          stock: product.stock - item.quantity,
+        });
+
         this.orderItemRespository.create({
           product,
           quantity: item.quantity,
