@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
 import { UserResponse } from 'src/users/dto/user.response.dto';
-import { UserPublicDto } from 'src/users/dto/user.public.dto';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @Injectable()
 export class AuthService {
@@ -44,7 +44,7 @@ export class AuthService {
     };
   }
 
-  async getUserFromToken(token: string): Promise<UserPublicDto> {
+  async getUserFromToken(token: string): Promise<UserDto> {
     try {
       const payload = await this.jwtService.verify(token, {
         secret: await this.configService.get('JWT_SECRET'),
@@ -55,7 +55,7 @@ export class AuthService {
       if (!(user instanceof User)) {
         throw new UnauthorizedException('Invalid credentials');
       }
-      return UserResponse.toObject(user);
+      return user;
     } catch (error) {
       console.log(error);
     }

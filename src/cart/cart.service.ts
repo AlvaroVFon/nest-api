@@ -104,4 +104,16 @@ export class CartService {
       throw new Error(error);
     }
   }
+
+  async clearCart(userId: number) {
+    try {
+      const cart = await this.getCart(userId);
+
+      cart.items = [];
+
+      return await this.cartRepository.save(cart);
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
 }

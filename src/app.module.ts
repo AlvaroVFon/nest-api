@@ -16,6 +16,7 @@ import { CartService } from './cart/cart.service';
 import { ProductsService } from './products/products.service';
 import { CategoriesService } from './categories/categories.service';
 import { UsersService } from './users/users.service';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { UsersService } from './users/users.service';
     CategoriesModule,
     ProductsModule,
     CartModule,
+    OrdersModule,
   ],
   controllers: [AppController, NotFoundControllerController, CartController],
   providers: [
