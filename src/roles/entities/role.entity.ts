@@ -14,7 +14,7 @@ export class Role {
   id: number;
 
   @IsString()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @OneToMany(() => User, (user) => user.role_id)
