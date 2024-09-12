@@ -31,7 +31,7 @@ export class User {
   @ManyToOne(() => Role, (role) => role.users)
   role_id: number;
 
-  @OneToMany(() => Cart, (cart) => cart.user)
+  @OneToMany(() => Cart, (cart) => cart.user, { onDelete: 'CASCADE' })
   carts: Cart;
 
   @OneToMany(() => Order, (order) => order.user)
