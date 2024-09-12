@@ -1,17 +1,25 @@
+import { Product } from '../entities/product.entity';
 import { ProductDto } from './product.dto';
 import { ProductPublicDTO } from './product.public.dto';
 
-//DUDA: Es correcto crear dos interfaces? O solo debería ser una para respuestas públicas?
-export interface ProductPublicResponseDto {
+export class ProductResponseDto {
+  status: number;
+  message: string;
   data: ProductPublicDTO[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
+  total?: number;
+  page?: number;
+  totalPages?: number;
 
-export interface ProductResponseDto {
-  data: ProductDto[];
-  total: number;
-  page: number;
-  totalPages: number;
+  static toPublic(productResponse: ProductResponseDto): ProductResponseDto {
+    return {
+      status: productResponse.status,
+      message: productResponse.message,
+      data: productResponse.data.map((product: Product) =>
+        ProductDto.fromSchemaToPublic(product),
+      ),
+      total: productResponse.total,
+      page: productResponse.page,
+      totalPages: productResponse.totalPages,
+    };
+  }
 }

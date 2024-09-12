@@ -10,6 +10,9 @@ export class ProductDto {
   image?: string;
   stock: number;
   category: Category;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date;
 
   static fromRequest(
     productDto: CreateProductDto | UpdateProductDto,
@@ -22,6 +25,17 @@ export class ProductDto {
       image: productDto.image,
       stock: productDto.stock,
       category,
+    };
+  }
+
+  static fromSchemaToPublic(product: ProductDto): ProductDto {
+    return {
+      name: product.name,
+      price: product.price,
+      description: product.description,
+      image: product.image,
+      stock: product.stock,
+      category: product.category,
     };
   }
 }

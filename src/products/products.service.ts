@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { CategoriesService } from 'src/categories/categories.service';
-import { Category } from 'src/categories/entities/category.entity';
 import { ProductDto } from './dto/product.dto';
 import { PaginationDto } from 'src/pagination/pagination.dto';
 import { ProductResponseDto } from './dto/product.response.dto';
@@ -16,23 +20,43 @@ export class ProductsService {
     @InjectRepository(Product) private productRepository: Repository<Product>,
     private categoryService: CategoriesService,
   ) {}
-  async create(createProductDto: CreateProductDto) {
-    const category = await this.categoryService.findOne(
-      createProductDto.categoryId,
-    );
+  async create(
+    createProductDto: CreateProductDto,
+  ): Promise<ProductResponseDto> {
+    try {
+      const existingProduct = await this.productRepository.findOne({
+        where: { name: createProductDto.name },
+      });
 
-    if (!(category instanceof Category)) {
-      throw new NotFoundException('Category not found');
+      if (existingProduct) {
+        throw new BadRequestException('Product already exists');
+      }
+
+      const category = await this.categoryService.findOne(
+        createProductDto.categoryId,
+      );
+
+      if (!category) {
+        throw new NotFoundException('Category not found');
+      }
+
+      createProductDto.createdAt = new Date();
+
+      const product: ProductDto = ProductDto.fromRequest(
+        createProductDto,
+        category,
+      );
+
+      await this.productRepository.save(product);
+
+      return {
+        status: HttpStatus.CREATED,
+        message: 'Product created successfully',
+        data: [product],
+      };
+    } catch (error) {
+      return error;
     }
-
-    createProductDto.createdAt = new Date();
-
-    const product: ProductDto = ProductDto.fromRequest(
-      createProductDto,
-      category,
-    );
-
-    return await this.productRepository.save(product);
   }
 
   async findAll(pagination: PaginationDto): Promise<ProductResponseDto> {
@@ -47,20 +71,23 @@ export class ProductsService {
         skip,
       });
 
-      const totalPages = Math.ceil(total / limit);
+      const totalPages =
+        Math.ceil(total / limit) === 0 ? 1 : Math.ceil(total / limit);
 
-      if (page > totalPages) {
+      if (page > totalPages && page > 1) {
         throw new NotFoundException('Page not found');
       }
 
       return {
+        status: HttpStatus.OK,
+        message: 'Products found successfully',
         data: products,
         total,
         page,
         totalPages,
       };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
@@ -70,22 +97,30 @@ export class ProductsService {
         where: { id },
         relations: ['category'],
       });
-
-      if (!(product instanceof Product)) {
-        throw new NotFoundException('Product not found');
-      }
-
       return product;
     } catch (error) {
       throw new Error(error);
     }
   }
 
-  async update(id: number, updateProductDto: UpdateProductDto) {
+  async update(
+    id: number,
+    updateProductDto: UpdateProductDto,
+  ): Promise<ProductResponseDto> {
     try {
+      if (updateProductDto.name) {
+        const existingProduct = await this.productRepository.findOne({
+          where: { name: updateProductDto.name },
+        });
+
+        if (existingProduct && existingProduct.id !== id) {
+          throw new BadRequestException('Product already exists');
+        }
+      }
+
       const product = await this.productRepository.findOne({ where: { id } });
 
-      if (!(product instanceof Product)) {
+      if (!product) {
         throw new NotFoundException('Product not found');
       }
 
@@ -93,8 +128,8 @@ export class ProductsService {
         updateProductDto.categoryId,
       );
 
-      if (!(category instanceof Category)) {
-        throw new NotFoundException('Category not found');
+      if (!category) {
+        throw new NotFoundException('The category does not exist');
       }
 
       updateProductDto.updatedAt = new Date();
@@ -104,58 +139,58 @@ export class ProductsService {
         category,
       );
 
-      const updatedProduct = await this.productRepository.update(
-        id,
-        productUpdated,
-      );
+      await this.productRepository.update(id, productUpdated);
 
-      if (updatedProduct.affected === 1) {
-        return {
-          message: 'Product updated successfully',
-          product: await this.findOne(id),
-        };
-      }
+      return {
+        status: HttpStatus.OK,
+        message: 'Product updated successfully',
+        data: [productUpdated],
+      };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<ProductResponseDto> {
     try {
       const product = await this.productRepository.findOne({ where: { id } });
 
-      if (!(product instanceof Product)) {
+      if (!product) {
         throw new NotFoundException('Product not found');
       }
 
       await this.productRepository.softDelete(id);
 
       return {
+        status: HttpStatus.OK,
         message: 'Product removed successfully',
+        data: [product],
       };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
-  async restore(id: number) {
+  async restore(id: number): Promise<ProductResponseDto> {
     try {
       const product = await this.productRepository.findOne({
-        where: { id },
+        where: { id, deletedAt: Not(IsNull()) },
         withDeleted: true,
       });
 
-      if (!(product instanceof Product)) {
+      if (!product) {
         throw new NotFoundException('Product not found');
       }
 
       await this.productRepository.restore(id);
 
       return {
+        status: HttpStatus.OK,
         message: 'Product restored successfully',
+        data: [product],
       };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 }

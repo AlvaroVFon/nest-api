@@ -14,7 +14,7 @@ export class Product {
   id: number;
 
   @IsString()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @IsPositive()
