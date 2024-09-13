@@ -12,11 +12,13 @@ import { User } from './entities/user.entity';
 import { IsNull, Not, Repository } from 'typeorm';
 import { PaginationDto } from 'src/pagination/pagination.dto';
 import { UserResponse } from './dto/user.response.dto';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private roleService: RolesService,
   ) {}
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -26,6 +28,11 @@ export class UsersService {
 
       if (user) {
         throw new BadRequestException('User already exists');
+      }
+      const role = await this.roleService.findOne(createUserDto.role_id);
+
+      if (!role) {
+        throw new NotFoundException('Role not found');
       }
 
       createUserDto.password = await bcrypt.hashSync(

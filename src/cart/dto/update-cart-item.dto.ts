@@ -3,4 +3,8 @@ export class UpdateCartItemDto {
   @IsNotEmpty()
   @IsNumber()
   quantity: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  cartItemId: number;
 }

@@ -32,8 +32,6 @@ export class UsersController {
     return UserDto.fromSchematoPublic(response);
   }
 
-  // DUDA: cómo manejar errores. Cómo saber que errores puede lanzar el servicio
-
   @Get()
   async findAll(@Query() paginationDto: PaginationDto): Promise<UserResponse> {
     const response = await this.usersService.findAll(paginationDto);

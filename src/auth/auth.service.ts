@@ -7,7 +7,7 @@ import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
-  JWT_SECRET = this.configService.get('JWT_SECRET');
+  private JWT_SECRET = this.configService.get('JWT_SECRET');
 
   constructor(
     private usersService: UsersService,

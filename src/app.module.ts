@@ -17,6 +17,7 @@ import { ProductsService } from './products/products.service';
 import { CategoriesService } from './categories/categories.service';
 import { UsersService } from './users/users.service';
 import { OrdersModule } from './orders/orders.module';
+import { RolesService } from './roles/roles.service';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { OrdersModule } from './orders/orders.module';
     ProductsService,
     CategoriesService,
     UsersService,
+    RolesService,
   ],
 })
 export class AppModule {

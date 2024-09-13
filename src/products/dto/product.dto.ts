@@ -14,6 +14,20 @@ export class ProductDto {
   updatedAt?: Date;
   deletedAt?: Date;
 
+  static fromSchema(product: ProductDto): ProductDto {
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      description: product.description,
+      image: product.image,
+      stock: product.stock,
+      category: product.category,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      deletedAt: product.deletedAt,
+    };
+  }
   static fromRequest(
     productDto: CreateProductDto | UpdateProductDto,
     category: Category,
