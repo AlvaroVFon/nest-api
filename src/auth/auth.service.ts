@@ -4,12 +4,10 @@ import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
-import { UserResponse } from 'src/users/dto/user.response.dto';
-import { UserDto } from 'src/users/dto/user.dto';
 
 @Injectable()
 export class AuthService {
-  JWT_SECRET = this.configService.get('JWT_SECRET');
+  private JWT_SECRET = this.configService.get('JWT_SECRET');
 
   constructor(
     private usersService: UsersService,
@@ -17,11 +15,11 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<User> {
     try {
       const user = await this.usersService.findOneByEmail(email);
 
-      if (!(user instanceof User)) {
+      if (!user) {
         throw new UnauthorizedException('Invalid credentials');
       }
 
@@ -29,9 +27,9 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      return UserResponse.toObject(user);
+      return user;
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 
@@ -44,20 +42,15 @@ export class AuthService {
     };
   }
 
-  async getUserFromToken(token: string): Promise<UserDto> {
+  async getUserFromToken(token: string): Promise<User> {
     try {
       const payload = await this.jwtService.verify(token, {
         secret: await this.configService.get('JWT_SECRET'),
       });
 
-      const user = await this.usersService.findOneByEmail(payload.email);
-
-      if (!(user instanceof User)) {
-        throw new UnauthorizedException('Invalid credentials');
-      }
-      return user;
+      return await this.usersService.findOneByEmail(payload.email);
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 }

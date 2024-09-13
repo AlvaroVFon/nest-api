@@ -1,24 +1,51 @@
 import * as bcrypt from 'bcrypt';
-import { Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  HttpStatus,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { PaginationDto } from 'src/pagination/pagination.dto';
 import { UserResponse } from './dto/user.response.dto';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    private roleService: RolesService,
   ) {}
-  async create(createUserDto: CreateUserDto) {
-    createUserDto.password = await bcrypt.hashSync(createUserDto.password, 10);
-    return await this.userRepository.save(createUserDto);
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email: createUserDto.email },
+      });
+
+      if (user) {
+        throw new BadRequestException('User already exists');
+      }
+      const role = await this.roleService.findOne(createUserDto.role_id);
+
+      if (!role) {
+        throw new NotFoundException('Role not found');
+      }
+
+      createUserDto.password = await bcrypt.hashSync(
+        createUserDto.password,
+        10,
+      );
+      return await this.userRepository.save(createUserDto);
+    } catch (error) {
+      return error;
+    }
   }
 
-  async findAll(pagination: PaginationDto) {
+  async findAll(pagination: PaginationDto): Promise<UserResponse> {
     const { page = 1, limit = 3 } = pagination;
 
     const skip = (page - 1) * limit;
@@ -36,16 +63,17 @@ export class UsersService {
         throw new NotFoundException('Page not found');
       }
 
-      const data = users.map((user) => UserResponse.toObject(user));
-
+      // DUDA: por qué no me lanza error si data no es PublicUserDto[]???
       return {
-        data,
+        status: HttpStatus.OK,
+        message: 'Users retrieved successfully',
+        data: users,
         total,
         page,
         totalPages,
       };
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 
@@ -53,32 +81,33 @@ export class UsersService {
     try {
       const user = await this.userRepository.findOne({ where: { id } });
 
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
       return user;
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 
   async findOneByEmail(email: string): Promise<User> {
     try {
-      const user = this.userRepository.findOne({ where: { email } });
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      return user;
+      return await this.userRepository.findOne({ where: { email } });
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponse> {
     try {
+      const userEmail = await this.userRepository.findOne({
+        where: { email: updateUserDto.email },
+      });
+
+      if (userEmail && userEmail.id !== id) {
+        throw new BadRequestException('User email already exists');
+      }
+
       const user = await this.userRepository.findOne({ where: { id } });
 
       if (!user) {
@@ -87,63 +116,43 @@ export class UsersService {
 
       updateUserDto.updated_at = new Date();
 
-      const updatedUser = await this.userRepository.update(id, updateUserDto);
+      await this.userRepository.update(id, updateUserDto);
 
-      if (updatedUser.affected > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'User updated successfully',
-          data: updateUserDto,
-        };
-      }
+      return {
+        status: HttpStatus.OK,
+        message: 'User updated  successfully',
+        data: [updateUserDto],
+      };
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<UserResponse> {
     try {
-      const user = await this.userRepository.findOne({ where: { id } });
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
 
       if (!user) {
         throw new NotFoundException('User not found');
       }
 
-      const deletedUser = await this.userRepository.delete(id);
-      if (deletedUser.affected > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'User deleted successfully',
-        };
-      }
+      await this.userRepository.softDelete(id);
+
+      return {
+        status: HttpStatus.OK,
+        message: 'User deleted successfully',
+        data: [user],
+      };
     } catch (error) {
-      console.log(error);
-    }
-  }
-
-  async softRemove(id: number) {
-    try {
-      const user = await this.userRepository.findOne({ where: { id } });
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
-      const updatedUser = await this.userRepository.softDelete(id);
-      if (updatedUser.affected > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'User deleted successfully',
-        };
-      }
-    } catch (error) {
-      console.log(error);
+      return error;
     }
   }
   async restore(id: number) {
     try {
       const user = await this.userRepository.findOne({
-        where: { id },
+        where: { id, deleted_at: Not(IsNull()) },
         withDeleted: true,
       });
 
@@ -151,16 +160,14 @@ export class UsersService {
         throw new NotFoundException('User not found');
       }
 
-      const updatedUser = await this.userRepository.restore(id);
+      await this.userRepository.restore(id);
 
-      if (updatedUser.affected > 0) {
-        return {
-          statusCode: HttpStatus.OK,
-          message: 'User restored successfully',
-        };
-      }
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'User restored successfully',
+      };
     } catch (error) {
-      console.log(error);
+      return error;
     }
   }
 }

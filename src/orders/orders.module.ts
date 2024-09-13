@@ -11,6 +11,8 @@ import { UsersService } from 'src/users/users.service';
 import { CartModule } from 'src/cart/cart.module';
 import { UsersModule } from 'src/users/users.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { RolesModule } from 'src/roles/roles.module';
+import { RolesService } from 'src/roles/roles.service';
 
 @Module({
   imports: [
@@ -20,8 +22,15 @@ import { AuthModule } from 'src/auth/auth.module';
     CartModule,
     UsersModule,
     AuthModule,
+    RolesModule,
   ],
-  providers: [OrdersService, ProductsService, CartService, UsersService],
+  providers: [
+    OrdersService,
+    ProductsService,
+    CartService,
+    UsersService,
+    RolesService,
+  ],
   controllers: [OrdersController],
   exports: [TypeOrmModule],
 })

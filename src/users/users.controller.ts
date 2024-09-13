@@ -7,59 +7,83 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
+  HttpException,
+  NotFoundException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationDto } from 'src/pagination/pagination.dto';
-import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { UserResponse } from './dto/user.response.dto';
 import { UserPublicDto } from './dto/user.public.dto';
+import { UserDto } from './dto/user.dto';
 
-@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.create(createUserDto);
-    return UserResponse.toObject(user);
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserPublicDto> {
+    const response = await this.usersService.create(createUserDto);
+
+    if (response instanceof HttpException) {
+      throw response;
+    }
+    return UserDto.fromSchematoPublic(response);
   }
 
   @Get()
-  async findAll(@Query() paginationDto: PaginationDto) {
-    return await this.usersService.findAll(paginationDto);
+  async findAll(@Query() paginationDto: PaginationDto): Promise<UserResponse> {
+    const response = await this.usersService.findAll(paginationDto);
+
+    if (response instanceof HttpException) {
+      throw response;
+    }
+
+    return UserResponse.toPublic(response);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<UserPublicDto> {
-    try {
-      const user = await this.usersService.findOne(+id);
-      return UserResponse.toObject(user);
-    } catch (error) {
-      console.log(error);
+    const user = await this.usersService.findOne(+id);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+
+    return UserDto.fromSchematoPublic(user);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
-  }
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    const response = await this.usersService.update(+id, updateUserDto);
 
-  @Patch(':id/delete')
-  softDelete(@Param('id') id: string) {
-    return this.usersService.softRemove(+id);
-  }
+    if (response instanceof HttpException) {
+      throw response;
+    }
 
-  @Patch(':id/restore')
-  restore(@Param('id') id: string) {
-    return this.usersService.restore(+id);
+    return response;
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  async softDelete(@Param('id') id: string): Promise<UserResponse> {
+    const response = await this.usersService.remove(+id);
+
+    if (response instanceof HttpException) {
+      throw response;
+    }
+
+    return UserResponse.toPublic(response);
+  }
+
+  @Patch(':id/restore')
+  async restore(@Param('id') id: string) {
+    const response = await this.usersService.restore(+id);
+
+    if (response instanceof HttpException) {
+      throw response;
+    }
+
+    return response;
   }
 }

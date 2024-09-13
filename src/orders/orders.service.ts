@@ -26,7 +26,7 @@ export class OrdersService {
         throw new NotFoundException('User not found');
       }
 
-      const { items } = await this.cartService.getCartOrCreate(userId);
+      const { items } = await this.cartService.getCart(userId);
 
       if (!items.length) {
         throw new NotFoundException('Cart is empty');

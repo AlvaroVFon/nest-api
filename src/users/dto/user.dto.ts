@@ -1,4 +1,5 @@
 import { User } from '../entities/user.entity';
+import { UserPublicDto } from './user.public.dto';
 
 export class UserDto {
   id: number;
@@ -20,6 +21,13 @@ export class UserDto {
       created_at: user.created_at,
       updated_at: user.updated_at,
       deleted_at: user.deleted_at,
+    };
+  }
+
+  static fromSchematoPublic(user: User): UserPublicDto {
+    return {
+      name: user.name,
+      email: user.email,
     };
   }
 }

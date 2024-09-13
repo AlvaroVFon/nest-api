@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { PaginationDto } from 'src/pagination/pagination.dto';
 import { CategoryResponse } from './dto/category.response.dto';
 
@@ -14,16 +19,31 @@ export class CategoriesService {
     private categoryRepository: Repository<Category>,
   ) {}
 
-  async create(createCategoryDto: CreateCategoryDto) {
+  async create(
+    createCategoryDto: CreateCategoryDto,
+  ): Promise<CategoryResponse> {
     try {
-      createCategoryDto.created_at = new Date();
-      return await this.categoryRepository.save(createCategoryDto);
+      const category = await this.categoryRepository.findOne({
+        where: { name: createCategoryDto.name },
+      });
+
+      if (category) {
+        throw new BadRequestException('Category already exists');
+      }
+      const createdCategory =
+        await this.categoryRepository.save(createCategoryDto);
+
+      return {
+        status: HttpStatus.CREATED,
+        message: 'Category created successfully',
+        data: [createdCategory],
+      };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
-  async findAll(pagination: PaginationDto) {
+  async findAll(pagination: PaginationDto): Promise<CategoryResponse> {
     const { page = 1, limit = 3 } = pagination;
 
     const skip = (page - 1) * limit;
@@ -41,101 +61,106 @@ export class CategoriesService {
         throw new NotFoundException('Page not found');
       }
 
-      const publicCategories = categories.map((category) =>
-        CategoryResponse.toObject(category),
-      );
-
       return {
-        data: publicCategories,
+        status: HttpStatus.OK,
+        message: 'Categories retrieved successfully',
+        data: categories,
         total,
         page,
         totalPages,
       };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
   async findOne(id: number): Promise<Category> {
     try {
-      const category = await this.categoryRepository.findOne({ where: { id } });
-
-      if (!(category instanceof Category)) {
-        throw new NotFoundException('Category not found');
-      }
-
-      return category;
+      return await this.categoryRepository.findOne({ where: { id } });
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
+  async update(
+    id: number,
+    updateCategoryDto: UpdateCategoryDto,
+  ): Promise<CategoryResponse> {
     try {
-      const category = await this.categoryRepository.findOne({ where: { id } });
+      const category = await this.categoryRepository.findOne({
+        where: { name: updateCategoryDto.name },
+      });
 
-      if (!(category instanceof Category)) {
+      if (category && category.id !== id) {
+        throw new BadRequestException('Category name already exists');
+      }
+
+      const categoryExists = await this.categoryRepository.findOne({
+        where: { id },
+      });
+
+      if (!categoryExists) {
         throw new NotFoundException('Category not found');
       }
 
       updateCategoryDto.updated_at = new Date();
 
-      return await this.categoryRepository.update(id, updateCategoryDto);
+      await this.categoryRepository.update(id, updateCategoryDto);
+
+      const updatedCategory = await this.categoryRepository.findOne({
+        where: { id },
+      });
+
+      return {
+        status: HttpStatus.OK,
+        message: 'Category updated successfully',
+        data: [updatedCategory],
+      };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<CategoryResponse> {
     try {
       const category = await this.categoryRepository.findOne({ where: { id } });
 
-      if (!(category instanceof Category)) {
+      if (!category) {
         throw new NotFoundException('Category not found');
       }
 
-      const deletedCategory = await this.categoryRepository.softDelete(id);
-
-      if (deletedCategory.affected === 0) {
-        throw new NotFoundException('Category not found');
-      }
+      await this.categoryRepository.softDelete(id);
 
       return {
+        status: HttpStatus.OK,
         message: 'Category deleted successfully',
-        category,
+        data: [category],
       };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
-  async restore(id: number) {
+  async restore(id: number): Promise<CategoryResponse> {
     try {
       const category = await this.categoryRepository.findOne({
-        where: { id },
+        where: { id, deleted_at: Not(IsNull()) },
         withDeleted: true,
       });
 
-      if (!(category instanceof Category)) {
+      if (!category) {
         throw new NotFoundException('Category not found');
       }
 
-      if (category.deleted_at === null) {
-        throw new NotFoundException('Category not deleted');
-      }
-
-      const restoredCategory = await this.categoryRepository.restore(id);
-
-      if (restoredCategory.affected === 0) {
-        throw new NotFoundException('Category not found');
-      }
+      await this.categoryRepository.restore(id);
 
       return {
+        status: HttpStatus.OK,
         message: 'Category restored successfully',
-        category,
+        data: [category],
       };
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 }

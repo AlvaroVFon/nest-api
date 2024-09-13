@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cart, CartItem } from './entities/cart.entity';
 import { UsersService } from 'src/users/users.service';
 import { ProductsService } from 'src/products/products.service';
 import { CreateCartItemDto } from './dto/create-cart-item.dto';
+import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 
 @Injectable()
 export class CartService {
@@ -16,7 +21,7 @@ export class CartService {
     private productsService: ProductsService,
   ) {}
 
-  async getCartOrCreate(userId: number): Promise<Cart> {
+  async createCart(userId: number): Promise<Cart> {
     try {
       const user = await this.userService.findOne(userId);
 
@@ -24,96 +29,149 @@ export class CartService {
         throw new NotFoundException('User not found');
       }
 
-      let cart = await this.cartRepository.findOne({
+      const userCart = await this.cartRepository.findOne({
         where: { user },
-        relations: ['items', 'items.product'],
+        relations: ['items', 'items.product', 'user'],
       });
 
-      if (cart) {
-        return cart;
+      if (userCart) {
+        throw new Error('Cart already exists');
       }
 
-      cart = this.cartRepository.create({ user, items: [] });
+      const cart = this.cartRepository.create({ user, items: [] });
+
       return await this.cartRepository.save(cart);
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 
   async getCart(userId: number): Promise<Cart> {
-    const cart = await this.cartRepository.findOne({
-      where: { user: { id: userId } },
-      relations: ['items', 'items.product'],
-    });
+    try {
+      const user = await this.userService.findOne(userId);
 
-    if (!cart) {
-      throw new NotFoundException('Cart not found');
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const cart = await this.cartRepository.findOne({
+        where: { user },
+        relations: ['items', 'items.product', 'user', 'items.product.category'],
+      });
+
+      return cart;
+    } catch (error) {
+      return error;
     }
-
-    return cart;
   }
 
   async addItem(
     userId: number,
     createCartItemDto: CreateCartItemDto,
-  ): Promise<Cart> {
-    const cart = await this.getCartOrCreate(userId);
+  ): Promise<CartItem> {
+    try {
+      let cart = await this.getCart(userId);
 
-    const { productId, quantity } = createCartItemDto;
+      const user = await this.userService.findOne(userId);
 
-    const product = await this.productsService.findOne(productId);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
 
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
+      if (!cart) {
+        cart = await this.createCart(user.id);
+      }
 
-    let cartItem = cart.items?.find((item) => item.product.id === productId);
+      const { productId, quantity } = createCartItemDto;
 
-    if (cartItem) {
-      if (cartItem.product.stock < cartItem.quantity + quantity) {
-        throw new Error('Not enough stock');
+      const product = await this.productsService.findOne(productId);
+
+      if (!product) {
+        throw new NotFoundException('Product not found');
+      }
+
+      let cartItem = cart.items?.find((item) => item.product.id === productId);
+
+      if (cartItem) {
+        if (cartItem.product.stock < cartItem.quantity + quantity) {
+          throw new ConflictException('Not enough stock');
+        } else {
+          cartItem.quantity += quantity;
+        }
       } else {
-        cartItem.quantity += quantity;
+        if (product.stock < quantity) {
+          throw new ConflictException('Not enough stock');
+        }
+        cartItem = this.cartItemRepository.create({ cart, product, quantity });
+        cart.items?.push(cartItem);
       }
-    } else {
-      if (product.stock < quantity) {
-        throw new Error('Not enough stock');
-      }
-      cartItem = this.cartItemRepository.create({ cart, product, quantity });
-      cart.items?.push(cartItem);
-    }
 
-    await this.cartItemRepository.save(cartItem);
-    return this.cartRepository.save(cart);
+      await this.cartItemRepository.save(cartItem);
+      await this.cartRepository.save(cart);
+
+      return cartItem;
+    } catch (error) {
+      return error;
+    }
   }
 
-  async removeItem(userId: number, productId: number) {
+  async removeItem(
+    userId: number,
+    updateCartItemDto: UpdateCartItemDto,
+  ): Promise<CartItem> {
     try {
+      const { cartItemId, quantity } = updateCartItemDto;
+
       const cart = await this.getCart(userId);
 
-      const cartItem = cart.items?.find(
-        (item) => item.product.id === productId,
-      );
+      if (!cart) {
+        throw new NotFoundException('Cart not found');
+      }
+
+      const cartItem = cart.items?.find((item) => item.id === cartItemId);
 
       if (!cartItem) {
         throw new NotFoundException('Item not found');
       }
 
-      return await this.cartItemRepository.remove(cartItem);
+      if (cartItem.quantity <= quantity) {
+        cart.items = cart.items?.filter((item) => item.id !== cartItemId);
+        await this.cartItemRepository.remove(cartItem);
+      } else {
+        cartItem.quantity -= quantity;
+        await this.cartItemRepository.save(cartItem);
+      }
+
+      await this.cartRepository.save(cart);
+
+      return cartItem;
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
-
-  async clearCart(userId: number) {
+  async clearCart(userId: number): Promise<Cart> {
     try {
+      const user = await this.userService.findOne(userId);
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
       const cart = await this.getCart(userId);
+
+      console.log('---------->Cart', cart);
+
+      if (!cart) {
+        throw new NotFoundException('Cart not found');
+      }
 
       cart.items = [];
 
-      return await this.cartRepository.save(cart);
+      await this.cartRepository.save(cart);
+
+      return cart;
     } catch (error) {
-      throw new Error(error);
+      return error;
     }
   }
 }

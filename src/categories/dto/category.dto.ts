@@ -16,4 +16,11 @@ export class CategoryDto {
       deleted_at: category.deleted_at,
     };
   }
+  static fromSchemaToPublic(category: Category) {
+    return {
+      id: category.id,
+      name: category.name,
+      description: category.description,
+    };
+  }
 }

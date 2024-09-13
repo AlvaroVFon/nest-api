@@ -1,17 +1,24 @@
+import { Category } from '../entities/category.entity';
 import { CategoryPublicDto } from './category.public.dto';
 
 export class CategoryResponse {
-  id: number;
-  name: string;
-  description: string;
-  updated_at: Date;
-  deleted_at: Date;
+  status: number;
+  message: string;
+  data: CategoryPublicDto[];
+  total?: number;
+  page?: number;
+  totalPages?: number;
 
-  static toObject(category: CategoryResponse): CategoryPublicDto {
+  static toPublic(category: CategoryResponse): CategoryResponse {
     return {
-      id: category.id,
-      name: category.name,
-      description: category.description,
+      status: category.status,
+      message: category.message,
+      data: category.data.map((category: Category) =>
+        CategoryPublicDto.toObject(category),
+      ),
+      total: category.total,
+      page: category.page,
+      totalPages: category.totalPages,
     };
   }
 }

@@ -1,4 +1,4 @@
-import { ProductDto } from './product.dto';
+import { Category } from 'src/categories/entities/category.entity';
 
 export class ProductPublicDTO {
   name: string;
@@ -6,16 +6,28 @@ export class ProductPublicDTO {
   description: string;
   image?: string;
   stock: number;
-  category: string;
+  category?: Category;
 
-  static toObject(product: ProductDto): ProductPublicDTO {
+  static fromSchema(product: ProductPublicDTO): ProductPublicDTO {
     return {
       name: product.name,
       price: product.price,
       description: product.description,
       image: product.image,
       stock: product.stock,
-      category: product.category.name,
+      category: product.category,
+    };
+  }
+
+  static fromSchemaWithOutCategory(
+    product: ProductPublicDTO,
+  ): ProductPublicDTO {
+    return {
+      name: product.name,
+      price: product.price,
+      description: product.description,
+      image: product.image,
+      stock: product.stock,
     };
   }
 }
