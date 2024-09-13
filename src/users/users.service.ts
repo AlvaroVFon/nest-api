@@ -41,7 +41,7 @@ export class UsersService {
       );
       return await this.userRepository.save(createUserDto);
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -63,7 +63,6 @@ export class UsersService {
         throw new NotFoundException('Page not found');
       }
 
-      // DUDA: por qué no me lanza error si data no es PublicUserDto[]???
       return {
         status: HttpStatus.OK,
         message: 'Users retrieved successfully',
@@ -73,7 +72,7 @@ export class UsersService {
         totalPages,
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -81,9 +80,12 @@ export class UsersService {
     try {
       const user = await this.userRepository.findOne({ where: { id } });
 
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
       return user;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -91,44 +93,34 @@ export class UsersService {
     try {
       return await this.userRepository.findOne({ where: { email } });
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
-  async update(
-    id: number,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UserResponse> {
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
     try {
-      const userEmail = await this.userRepository.findOne({
-        where: { email: updateUserDto.email },
+      const user = await this.userRepository.findOne({
+        where: { id },
       });
-
-      if (userEmail && userEmail.id !== id) {
-        throw new BadRequestException('User email already exists');
-      }
-
-      const user = await this.userRepository.findOne({ where: { id } });
-
       if (!user) {
         throw new NotFoundException('User not found');
+      }
+
+      if (user.email === updateUserDto.email && user.id !== id) {
+        throw new BadRequestException('User email already exists');
       }
 
       updateUserDto.updated_at = new Date();
 
       await this.userRepository.update(id, updateUserDto);
 
-      return {
-        status: HttpStatus.OK,
-        message: 'User updated  successfully',
-        data: [updateUserDto],
-      };
+      return await this.userRepository.findOne({ where: { id } });
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
-  async remove(id: number): Promise<UserResponse> {
+  async remove(id: number): Promise<User> {
     try {
       const user = await this.userRepository.findOne({
         where: { id },
@@ -140,16 +132,13 @@ export class UsersService {
 
       await this.userRepository.softDelete(id);
 
-      return {
-        status: HttpStatus.OK,
-        message: 'User deleted successfully',
-        data: [user],
-      };
+      return user;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
-  async restore(id: number) {
+
+  async restore(id: number): Promise<User> {
     try {
       const user = await this.userRepository.findOne({
         where: { id, deleted_at: Not(IsNull()) },
@@ -162,12 +151,9 @@ export class UsersService {
 
       await this.userRepository.restore(id);
 
-      return {
-        statusCode: HttpStatus.OK,
-        message: 'User restored successfully',
-      };
+      return user;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }
