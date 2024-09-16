@@ -1,4 +1,5 @@
 import { Category } from 'src/categories/entities/category.entity';
+import { Product } from '../entities/product.entity';
 
 export class ProductPublicDTO {
   name: string;
@@ -8,7 +9,7 @@ export class ProductPublicDTO {
   stock: number;
   category?: Category;
 
-  static fromSchema(product: ProductPublicDTO): ProductPublicDTO {
+  static fromSchema(product: Product): ProductPublicDTO {
     return {
       name: product.name,
       price: product.price,
