@@ -35,6 +35,18 @@ export class OrdersService {
       if (!items.length) {
         throw new NotFoundException('Cart is empty');
       }
+      const user = await this.usersService.findOne(userId);
+
+      const order = await this.orderRespository.save({
+        user,
+        items,
+        total: items.reduce(
+          (acc, item) => acc + item.product.price * item.quantity,
+          0,
+        ),
+        status: OrderStatus.PENDING,
+        createdAt: new Date(),
+      });
 
       items.forEach(async (item) => {
         const product = await this.productsService.findOne(item.product.id);
@@ -51,23 +63,14 @@ export class OrdersService {
           stock: product.stock - item.quantity,
         });
 
-        this.orderItemRespository.create({
+        const orderItem = this.orderItemRespository.create({
+          order,
           product,
           quantity: item.quantity,
           price: product.price,
         });
-      });
-      const user = await this.usersService.findOne(userId);
 
-      const order = await this.orderRespository.save({
-        user,
-        items,
-        total: items.reduce(
-          (acc, item) => acc + item.product.price * item.quantity,
-          0,
-        ),
-        status: OrderStatus.PENDING,
-        createdAt: new Date(),
+        await this.orderItemRespository.save(orderItem);
       });
 
       await this.cartService.clearCart(userId);
@@ -86,7 +89,10 @@ export class OrdersService {
         throw new NotFoundException('User not found');
       }
 
-      return await this.orderRespository.find({ where: { user } });
+      return await this.orderRespository.find({
+        where: { user },
+        relations: ['user', 'items', 'items.product'],
+      });
     } catch (error) {
       throw error;
     }
