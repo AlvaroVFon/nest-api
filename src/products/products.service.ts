@@ -55,7 +55,7 @@ export class ProductsService {
         data: [product],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -87,7 +87,7 @@ export class ProductsService {
         totalPages,
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -147,7 +147,7 @@ export class ProductsService {
         data: [productUpdated],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -167,7 +167,7 @@ export class ProductsService {
         data: [product],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -190,7 +190,7 @@ export class ProductsService {
         data: [product],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }

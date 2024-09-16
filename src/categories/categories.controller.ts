@@ -7,8 +7,6 @@ import {
   Param,
   Delete,
   Query,
-  HttpException,
-  NotFoundException,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -28,9 +26,6 @@ export class CategoriesController {
   ): Promise<CategoryResponse> {
     const response = await this.categoriesService.create(createCategoryDto);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
     return CategoryResponse.toPublic(response);
   }
 
@@ -40,10 +35,6 @@ export class CategoriesController {
   ): Promise<CategoryResponse> {
     const response = await this.categoriesService.findAll(paginationDto);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return CategoryResponse.toPublic(response);
   }
 
@@ -51,9 +42,6 @@ export class CategoriesController {
   async findOne(@Param('id') id: string): Promise<CategoryPublicDto> {
     const category = await this.categoriesService.findOne(+id);
 
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
     return CategoryDto.fromSchemaToPublic(category);
   }
 
@@ -67,20 +55,12 @@ export class CategoriesController {
       updateCategoryDto,
     );
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return CategoryResponse.toPublic(response);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<CategoryResponse> {
     const response = await this.categoriesService.remove(+id);
-
-    if (response instanceof HttpException) {
-      throw response;
-    }
 
     return CategoryResponse.toPublic(response);
   }
@@ -89,9 +69,6 @@ export class CategoriesController {
   async restore(@Param('id') id: string) {
     const response = await this.categoriesService.restore(+id);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
     return CategoryResponse.toPublic(response);
   }
 }

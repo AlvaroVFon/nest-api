@@ -42,7 +42,7 @@ export class CartService {
 
       return await this.cartRepository.save(cart);
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -61,7 +61,7 @@ export class CartService {
 
       return cart;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -72,14 +72,8 @@ export class CartService {
     try {
       let cart = await this.getCart(userId);
 
-      const user = await this.userService.findOne(userId);
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
       if (!cart) {
-        cart = await this.createCart(user.id);
+        cart = await this.createCart(userId);
       }
 
       const { productId, quantity } = createCartItemDto;
@@ -111,7 +105,7 @@ export class CartService {
 
       return cartItem;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -146,20 +140,12 @@ export class CartService {
 
       return cartItem;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
   async clearCart(userId: number): Promise<Cart> {
     try {
-      const user = await this.userService.findOne(userId);
-
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-
       const cart = await this.getCart(userId);
-
-      console.log('---------->Cart', cart);
 
       if (!cart) {
         throw new NotFoundException('Cart not found');
@@ -171,7 +157,7 @@ export class CartService {
 
       return cart;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }
