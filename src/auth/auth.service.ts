@@ -29,28 +29,16 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
   async signIn(user: User): Promise<{ token: string }> {
     const payload = { email: user.email, id: user.id };
     return {
-      token: await this.jwtService.sign(payload, {
+      token: this.jwtService.sign(payload, {
         secret: this.JWT_SECRET,
       }),
     };
-  }
-
-  async getUserFromToken(token: string): Promise<User> {
-    try {
-      const payload = await this.jwtService.verify(token, {
-        secret: await this.configService.get('JWT_SECRET'),
-      });
-
-      return await this.usersService.findOneByEmail(payload.email);
-    } catch (error) {
-      return error;
-    }
   }
 }

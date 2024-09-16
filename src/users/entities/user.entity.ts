@@ -35,7 +35,7 @@ export class User {
   carts: Cart;
 
   @OneToMany(() => Order, (order) => order.user)
-  orders: Order;
+  orders: Order[];
 
   @Column({ default: new Date() })
   created_at: Date;

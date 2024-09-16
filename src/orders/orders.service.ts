@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderItem, OrderStatus } from './entities/order.entity';
@@ -20,13 +24,13 @@ export class OrdersService {
 
   async createOrder(userId: number): Promise<Order> {
     try {
-      const user = await this.usersService.findOne(userId);
+      const cart = await this.cartService.getCart(userId);
 
-      if (!user) {
-        throw new NotFoundException('User not found');
+      if (!cart) {
+        throw new NotFoundException('Cart not found');
       }
 
-      const { items } = await this.cartService.getCart(userId);
+      const items = cart.items;
 
       if (!items.length) {
         throw new NotFoundException('Cart is empty');
@@ -40,7 +44,7 @@ export class OrdersService {
         }
 
         if (product.stock < item.quantity) {
-          throw new Error('Insufficient stock');
+          throw new ConflictException('Insufficient stock');
         }
 
         await this.productsService.update(product.id, {
@@ -53,6 +57,7 @@ export class OrdersService {
           price: product.price,
         });
       });
+      const user = await this.usersService.findOne(userId);
 
       const order = await this.orderRespository.save({
         user,
@@ -69,11 +74,11 @@ export class OrdersService {
 
       return order;
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 
-  async findOneByUser(userId: number): Promise<Order> {
+  async findAllByUser(userId: number): Promise<Order[]> {
     try {
       const user = await this.usersService.findOne(userId);
 
@@ -81,9 +86,9 @@ export class OrdersService {
         throw new NotFoundException('User not found');
       }
 
-      return await this.orderRespository.findOne({ where: { user } });
+      return await this.orderRespository.find({ where: { user } });
     } catch (error) {
-      throw new Error(error.message);
+      throw error;
     }
   }
 }

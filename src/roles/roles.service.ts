@@ -36,7 +36,7 @@ export class RolesService {
         data: [createdUser],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -54,7 +54,7 @@ export class RolesService {
         data: roles,
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -62,7 +62,7 @@ export class RolesService {
     try {
       return await this.roleRepository.findOne({ where: { id } });
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -94,7 +94,7 @@ export class RolesService {
         data: [await this.roleRepository.findOne({ where: { id } })],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -116,7 +116,7 @@ export class RolesService {
         data: [role],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -139,7 +139,7 @@ export class RolesService {
         data: [role],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }

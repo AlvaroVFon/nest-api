@@ -7,8 +7,6 @@ import {
   Param,
   Delete,
   Query,
-  HttpException,
-  NotFoundException,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -27,10 +25,6 @@ export class ProductsController {
   ): Promise<ProductResponseDto> {
     const response = await this.productsService.create(createProductDto);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return ProductResponseDto.toPublic(response);
   }
 
@@ -40,10 +34,6 @@ export class ProductsController {
   ): Promise<ProductResponseDto> {
     const products = await this.productsService.findAll(pagination);
 
-    if (products instanceof HttpException) {
-      throw products;
-    }
-
     return ProductResponseDto.toPublic(products);
   }
 
@@ -51,9 +41,6 @@ export class ProductsController {
   async findOne(@Param('id') id: string): Promise<ProductPublicDTO> {
     const product = await this.productsService.findOne(+id);
 
-    if (!product) {
-      throw new NotFoundException('Product not found');
-    }
     return product;
   }
 
@@ -64,10 +51,6 @@ export class ProductsController {
   ): Promise<ProductResponseDto> {
     const response = await this.productsService.update(+id, updateProductDto);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return ProductResponseDto.toPublic(response);
   }
 
@@ -75,20 +58,12 @@ export class ProductsController {
   async remove(@Param('id') id: string): Promise<ProductResponseDto> {
     const response = await this.productsService.remove(+id);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return ProductResponseDto.toPublic(response);
   }
 
   @Patch(':id/restore')
   async restore(@Param('id') id: string): Promise<ProductResponseDto> {
     const response = await this.productsService.restore(+id);
-
-    if (response instanceof HttpException) {
-      throw response;
-    }
 
     return ProductResponseDto.toPublic(response);
   }

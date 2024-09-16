@@ -1,26 +1,29 @@
-import { Controller, NotFoundException, Req } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { OrdersService } from './orders.service';
-import { AuthService } from 'src/auth/auth.service';
 import { Post } from '@nestjs/common';
 import { Request } from 'express';
+import { Order } from './entities/order.entity';
+import { JwtAuthGuard } from 'src/auth/auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    private ordersService: OrdersService,
-    private authService: AuthService,
-  ) {}
+  constructor(private ordersService: OrdersService) {}
 
   @Post()
-  async createOrder(@Req() request: Request) {
-    const token = request.headers.authorization.split(' ')[1];
+  async createOrder(@Req() req: Request) {
+    const user = req.user;
 
-    const user = await this.authService.getUserFromToken(token);
+    const order = await this.ordersService.createOrder(user.id);
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    return order;
+  }
 
-    return await this.ordersService.createOrder(user.id);
+  // FIXME: cambiar order por publicOrderDto
+  @Get()
+  async getOrderByUser(@Req() req: Request): Promise<Order[]> {
+    const orders = await this.ordersService.findAllByUser(req.user.id);
+
+    return orders;
   }
 }

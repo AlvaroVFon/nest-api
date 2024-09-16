@@ -6,8 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  HttpException,
-  NotFoundException,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
@@ -23,10 +21,6 @@ export class RolesController {
   async create(@Body() createRoleDto: CreateRoleDto): Promise<RoleResponse> {
     const response = await this.rolesService.create(createRoleDto);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return RoleResponse.toPublic(response);
   }
 
@@ -34,20 +28,12 @@ export class RolesController {
   async findAll(): Promise<RoleResponse> {
     const response = await this.rolesService.findAll();
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return RoleResponse.toPublic(response);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<RolePublicDto> {
     const user = await this.rolesService.findOne(+id);
-
-    if (!user) {
-      throw new NotFoundException('Role not found');
-    }
 
     return RolePublicDto.fromEntity(user);
   }
@@ -59,10 +45,6 @@ export class RolesController {
   ): Promise<RoleResponse> {
     const response = await this.rolesService.update(+id, updateRoleDto);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return RoleResponse.toPublic(response);
   }
 
@@ -70,20 +52,12 @@ export class RolesController {
   async restore(@Param('id') id: string) {
     const response = await this.rolesService.restore(+id);
 
-    if (response instanceof HttpException) {
-      throw response;
-    }
-
     return RoleResponse.toPublic(response);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<RoleResponse> {
     const response = await this.rolesService.remove(+id);
-
-    if (response instanceof HttpException) {
-      throw response;
-    }
 
     return RoleResponse.toPublic(response);
   }

@@ -39,7 +39,7 @@ export class CategoriesService {
         data: [createdCategory],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -70,7 +70,7 @@ export class CategoriesService {
         totalPages,
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -78,7 +78,7 @@ export class CategoriesService {
     try {
       return await this.categoryRepository.findOne({ where: { id } });
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -117,7 +117,7 @@ export class CategoriesService {
         data: [updatedCategory],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -137,7 +137,7 @@ export class CategoriesService {
         data: [category],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 
@@ -160,7 +160,7 @@ export class CategoriesService {
         data: [category],
       };
     } catch (error) {
-      return error;
+      throw error;
     }
   }
 }
