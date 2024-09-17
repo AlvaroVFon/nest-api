@@ -11,6 +11,7 @@ import {
 
 export enum OrderStatus {
   PENDING = 'PENDING',
+  PAID = 'PAID',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
 }
@@ -33,10 +34,16 @@ export class Order {
   status: OrderStatus;
 
   @Column({ default: null })
+  checkoutSessionId?: string;
+
+  @Column({ default: null })
   createdAt?: Date;
 
   @Column({ default: null })
   updatedAt?: Date;
+
+  @Column({ default: null })
+  payedAt?: Date;
 
   @DeleteDateColumn({ default: null })
   deletedAt?: Date;

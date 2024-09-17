@@ -18,6 +18,10 @@ import { CategoriesService } from './categories/categories.service';
 import { UsersService } from './users/users.service';
 import { OrdersModule } from './orders/orders.module';
 import { RolesService } from './roles/roles.service';
+import { StripeService } from './stripe/stripe.service';
+import { StripeModule } from './stripe/stripe.module';
+import { StripeController } from './stripe/stripe.controller';
+import { OrdersService } from './orders/orders.service';
 
 @Module({
   imports: [
@@ -41,8 +45,14 @@ import { RolesService } from './roles/roles.service';
     ProductsModule,
     CartModule,
     OrdersModule,
+    StripeModule,
   ],
-  controllers: [AppController, NotFoundControllerController, CartController],
+  controllers: [
+    AppController,
+    NotFoundControllerController,
+    CartController,
+    StripeController,
+  ],
   providers: [
     AppService,
     CartService,
@@ -50,6 +60,8 @@ import { RolesService } from './roles/roles.service';
     CategoriesService,
     UsersService,
     RolesService,
+    StripeService,
+    OrdersService,
   ],
 })
 export class AppModule {

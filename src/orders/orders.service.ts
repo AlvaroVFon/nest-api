@@ -9,6 +9,7 @@ import { Order, OrderItem, OrderStatus } from './entities/order.entity';
 import { ProductsService } from 'src/products/products.service';
 import { CartService } from 'src/cart/cart.service';
 import { UsersService } from 'src/users/users.service';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -80,6 +81,16 @@ export class OrdersService {
       throw error;
     }
   }
+  async findOne(id: number): Promise<Order> {
+    try {
+      return await this.orderRespository.findOne({
+        where: { id },
+        relations: ['user', 'items', 'items.product'],
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 
   async findAllByUser(userId: number): Promise<Order[]> {
     try {
@@ -93,6 +104,25 @@ export class OrdersService {
         where: { user },
         relations: ['user', 'items', 'items.product'],
       });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async findOneBySessionId(sessionId: string): Promise<Order> {
+    try {
+      return await this.orderRespository.findOne({
+        where: { checkoutSessionId: sessionId },
+        relations: ['user', 'items', 'items.product'],
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async update(orderId: number, updateOrderDto: UpdateOrderDto) {
+    try {
+      await this.orderRespository.update(orderId, updateOrderDto);
     } catch (error) {
       throw error;
     }
