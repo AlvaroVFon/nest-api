@@ -35,7 +35,7 @@ export class StripeService {
             product_data: {
               name: item.product.name,
             },
-            unit_amount: item.product.price,
+            unit_amount: item.product.price * 100,
           },
           quantity: item.quantity,
         })),
@@ -61,9 +61,12 @@ export class StripeService {
       throw error;
     }
   }
-  async getCheckoutSession(sessionId: string) {
+  async getCheckoutSession(
+    sessionId: string,
+    options?: Stripe.Checkout.SessionRetrieveParams,
+  ) {
     try {
-      return await this.stripe.checkout.sessions.retrieve(sessionId);
+      return await this.stripe.checkout.sessions.retrieve(sessionId, options);
     } catch (error) {
       throw error;
     }
@@ -71,7 +74,7 @@ export class StripeService {
 
   async fullFillCheckout(sessionId: string): Promise<Order> {
     try {
-      const session = await this.stripe.checkout.sessions.retrieve(sessionId, {
+      const session = await this.getCheckoutSession(sessionId, {
         expand: ['line_items'],
       });
 
@@ -85,7 +88,10 @@ export class StripeService {
         throw new NotFoundException('Order not found');
       }
 
-      if (session.payment_status === 'paid') {
+      if (
+        session.payment_status === 'paid' &&
+        session.amount_total === order.total
+      ) {
         await this.orderService.update(order.id, {
           status: OrderStatus.PAID,
           payedAt: new Date(),

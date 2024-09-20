@@ -23,6 +23,13 @@ services:
     networks:
       - mynet
 
+  stripe-cli:
+    image: stripe/stripe-cli
+    container_name: stripe-cli
+    command: 'listen --api-key ${STRIPE_API_KEY} --device-name ${STRIPE_DEVICE_NAME} --forward-to web:8000/payment/webhook/'
+    env_file:
+      - .env
+
 networks:
   mynet:
     driver: bridge

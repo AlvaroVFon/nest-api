@@ -25,7 +25,7 @@ export class CartController {
   async getCart(@Req() req: Request): Promise<CartPublicDto> {
     const user = req.user;
 
-    const cart = await this.cartService.getCart(user.id);
+    const cart = await this.cartService.getCart(user?.id);
 
     return CartPublicDto.fromSchema(cart);
   }
@@ -37,7 +37,7 @@ export class CartController {
   ): Promise<CartItemPublicDto> {
     const user = req.user;
 
-    const addItem = await this.cartService.addItem(user.id, createCartItemDto);
+    const addItem = await this.cartService.addItem(user?.id, createCartItemDto);
 
     return CartItemPublicDto.fromSchema(addItem);
   }
@@ -50,7 +50,7 @@ export class CartController {
     const user = req.user;
 
     const removeItem = await this.cartService.removeItem(
-      user.id,
+      user?.id,
       updateCartItemDto,
     );
 
@@ -61,7 +61,7 @@ export class CartController {
   async clearCart(@Req() req: Request): Promise<CartPublicDto> {
     const user = req.user;
 
-    const clearCart = await this.cartService.clearCart(user.id);
+    const clearCart = await this.cartService.clearCart(user?.id);
 
     return CartPublicDto.fromSchema(clearCart);
   }
