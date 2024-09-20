@@ -4,6 +4,7 @@ import { Post } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard } from 'src/auth/auth.guard';
 import { OrderPublicDto } from './dto/order.public.dto';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
@@ -12,24 +13,17 @@ export class OrdersController {
 
   @Post()
   async createOrder(@Req() req: Request): Promise<OrderPublicDto> {
-    const user = req.user;
-
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const user = req.user as UserDto;
 
     const order = await this.ordersService.createOrder(user.id);
 
     return OrderPublicDto.fromSchema(order);
   }
 
+  // FIXME: cambiar order por publicOrderDto
   @Get()
   async getOrderByUser(@Req() req: Request): Promise<OrderPublicDto[]> {
-    const user = req.user;
-
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const user = req.user as UserDto;
 
     const orders = await this.ordersService.findAllByUser(user.id);
 
