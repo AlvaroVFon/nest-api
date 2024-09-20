@@ -25,6 +25,10 @@ export class CartController {
   async getCart(@Req() req: Request): Promise<CartPublicDto> {
     const user = req?.user;
 
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     const cart = await this.cartService.getCart(user.id);
 
     return CartPublicDto.fromSchema(cart);
@@ -36,6 +40,10 @@ export class CartController {
     @Body() createCartItemDto: CreateCartItemDto,
   ): Promise<CartItemPublicDto> {
     const user = req?.user;
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     const addItem = await this.cartService.addItem(user.id, createCartItemDto);
 
@@ -49,6 +57,10 @@ export class CartController {
   ): Promise<CartItemPublicDto> {
     const user = req?.user;
 
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     const removeItem = await this.cartService.removeItem(
       user.id,
       updateCartItemDto,
@@ -60,6 +72,10 @@ export class CartController {
   @Delete()
   async clearCart(@Req() req: Request): Promise<CartPublicDto> {
     const user = req?.user;
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     const clearCart = await this.cartService.clearCart(user.id);
 
