@@ -15,6 +15,7 @@ import { Request } from 'express';
 import { CartPublicDto } from './dto/cart.public.dto';
 import { CartItemPublicDto } from './dto/cartItem.public.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
+import { UserDto } from 'src/users/dto/user.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('cart')
@@ -23,12 +24,7 @@ export class CartController {
 
   @Get()
   async getCart(@Req() req: Request): Promise<CartPublicDto> {
-    const user = req?.user;
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
+    const user = req.user as UserDto;
     const cart = await this.cartService.getCart(user.id);
 
     return CartPublicDto.fromSchema(cart);
@@ -39,11 +35,7 @@ export class CartController {
     @Req() req: Request,
     @Body() createCartItemDto: CreateCartItemDto,
   ): Promise<CartItemPublicDto> {
-    const user = req?.user;
-
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const user = req.user as UserDto;
 
     const addItem = await this.cartService.addItem(user.id, createCartItemDto);
 
@@ -55,11 +47,7 @@ export class CartController {
     @Req() req: Request,
     @Body() updateCartItemDto: UpdateCartItemDto,
   ): Promise<CartItemPublicDto> {
-    const user = req?.user;
-
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const user = req.user as UserDto;
 
     const removeItem = await this.cartService.removeItem(
       user.id,
@@ -71,11 +59,7 @@ export class CartController {
 
   @Delete()
   async clearCart(@Req() req: Request): Promise<CartPublicDto> {
-    const user = req?.user;
-
-    if (!user) {
-      throw new Error('User not found');
-    }
+    const user = req.user as UserDto;
 
     const clearCart = await this.cartService.clearCart(user.id);
 
