@@ -14,7 +14,7 @@ export class OrdersController {
   async createOrder(@Req() req: Request): Promise<OrderPublicDto> {
     const user = req.user;
 
-    const order = await this.ordersService.createOrder(user.id);
+    const order = await this.ordersService.createOrder(user?.id);
 
     return OrderPublicDto.fromSchema(order);
   }
@@ -22,7 +22,7 @@ export class OrdersController {
   // FIXME: cambiar order por publicOrderDto
   @Get()
   async getOrderByUser(@Req() req: Request): Promise<OrderPublicDto[]> {
-    const orders = await this.ordersService.findAllByUser(req.user.id);
+    const orders = await this.ordersService.findAllByUser(req.user?.id);
 
     return orders.map((order) => OrderPublicDto.fromSchema(order));
   }
