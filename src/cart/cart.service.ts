@@ -38,7 +38,7 @@ export class CartService {
         throw new Error('Cart already exists');
       }
 
-      const cart = this.cartRepository.create({ user, items: [] });
+      const cart = this.cartRepository.create({ user, items: null });
 
       return await this.cartRepository.save(cart);
     } catch (error) {
@@ -151,7 +151,7 @@ export class CartService {
         throw new NotFoundException('Cart not found');
       }
 
-      cart.items = [];
+      cart.items = null;
 
       await this.cartRepository.save(cart);
 

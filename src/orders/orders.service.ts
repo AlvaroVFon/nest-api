@@ -33,7 +33,7 @@ export class OrdersService {
 
       const items = cart.items;
 
-      if (!items.length) {
+      if (!items) {
         throw new NotFoundException('Cart is empty');
       }
       const user = await this.usersService.findOne(userId);
